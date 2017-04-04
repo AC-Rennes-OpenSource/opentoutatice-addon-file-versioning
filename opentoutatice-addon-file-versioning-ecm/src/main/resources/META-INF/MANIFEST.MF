@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 1
+Bundle-Name: Opentoutatice File Versioning Addon
+Bundle-SymbolicName: fr.toutatice.ecm.platform.file.versioning;singleton:=true
+Bundle-Localization: plugin
+Bundle-Category: stateful
+Nuxeo-Component: OSGI-INF/extensions/versioning-service-contrib.xml,
+ OSGI-INF/extensions/listener-contrib.xml
+ 

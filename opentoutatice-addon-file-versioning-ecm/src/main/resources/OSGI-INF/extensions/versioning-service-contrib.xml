@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<component name="fr.toutatice.ecm.file.versioning" version="1.0">
+
+    <require>org.nuxeo.ecm.core.versioning.VersioningService</require>
+    <require>org.nuxeo.ecm.platform.filemanager.service.FileManagerService</require>
+
+    <extension target="org.nuxeo.ecm.core.versioning.VersioningService"
+        point="versioningService">
+        <!-- Update -->
+        <service class="fr.toutatice.ecm.file.versioning.FileVersioningService" /> 
+        
+    </extension>
+    
+    <!-- DnD / import -->
+    <extension target="org.nuxeo.ecm.platform.filemanager.service.FileManagerService"
+        point="versioning">
+        <versioning>
+            <defaultVersioningOption>MINOR</defaultVersioningOption>
+            <versionAfterAdd>true</versionAfterAdd>
+        </versioning>     
+   </extension> 
+
+</component>
