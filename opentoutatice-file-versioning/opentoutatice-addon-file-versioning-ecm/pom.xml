@@ -41,7 +41,7 @@
 	</build>
 
 	<scm>
-		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/file-versioning/trunk</developerConnection>
+		<developerConnection>scm:svn:http://projet.toutatice.fr/repos/toutatice-ecm/opentoutatice-addons/opentoutatice-file-versioning/trunk</developerConnection>
 	</scm>
 
 	<distributionManagement>
