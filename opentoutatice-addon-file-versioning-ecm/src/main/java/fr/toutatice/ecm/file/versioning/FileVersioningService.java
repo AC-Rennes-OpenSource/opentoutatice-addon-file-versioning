@@ -3,17 +3,20 @@
  */
 package fr.toutatice.ecm.file.versioning;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.core.api.DocumentException;
+import org.nuxeo.ecm.core.api.DocumentModel;
+import org.nuxeo.ecm.core.api.DocumentModelFactory;
 import org.nuxeo.ecm.core.api.VersioningOption;
+import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.ecm.core.model.Document;
+import org.nuxeo.ecm.core.schema.DocumentType;
 import org.nuxeo.ecm.core.versioning.StandardVersioningService;
+
+import fr.toutatice.ecm.platform.core.helper.ToutaticeDocumentHelper;
 
 
 /**
@@ -22,66 +25,84 @@ import org.nuxeo.ecm.core.versioning.StandardVersioningService;
  */
 public class FileVersioningService extends StandardVersioningService {
 
-    /** Storage of blob status of a File document (as dirty or not). */
-    private static final Map<String, Boolean> blobStatus = new HashMap<>(1);
+    /** Log. */
+    private static final Log log = LogFactory.getLog(FileVersioningService.class);
 
     /**
-     * Store blob status of a File document (as dirty or not).
-     * 
-     * @param docId
-     * @param binaryStatus
+     * Create.
      */
-    public void storeBlobStatus(String docId, boolean binaryStatus) {
-        blobStatus.put(docId, Boolean.valueOf(binaryStatus));
-    }
+    // @Override
+    // public void doPostCreate(Document doc, Map<String, Serializable> options) {
+    // DocumentType type = doc.getType();
+    // if (type != null && StringUtils.equals("File", type.getName())) {
+    // try {
+    // DocumentModel docModel = readModel(doc);
+    // Blob blob = docModel.getAdapter(BlobHolder.class).getBlob();
+    // if (blob != null && blob.getLength() > 0) {
+    // setInitialVersion(doc);
+    // Document version = doc.checkIn(null, null);
+    //
+    // DocumentModel versionModel = readModel(version);
+    // String title = (String) docModel.getPropertyValue("dc:title");
+    // versionModel.setPropertyValue("dc:title", title);
+    //
+    // Event evt =
+    // // DublinCore ?
+    // versionModel.getCoreSession().save();
+    // }
+    // } catch (Exception e) {
+    // log.error(e);
+    // }
+    // } else {
+    // super.doPostCreate(doc, options);
+    // }
+    // }
 
     /**
-     * Return true if document is a File
-     * and has its principal blob modified.
-     * 
-     * Note: this method is called on checkout and checkin.
+     * Update.
      */
     @Override
-    public boolean isPostSaveDoingCheckIn(Document doc, VersioningOption option, Map<String, Serializable> options) throws DocumentException {
-        boolean checkin = false;
+    protected VersioningOption validateOption(Document doc, VersioningOption option) throws DocumentException {
+        DocumentType type = doc.getType();
 
-        if (doc.getType() != null && StringUtils.equals("File", doc.getType().getName())) {
-            // Check blob has changed
-            checkin = doc.isCheckedOut() && BooleanUtils.isTrue(blobStatus.get(doc.getUUID()));
+        boolean versioned = false;
+        if (type != null && StringUtils.equals("File", type.getName())) {
+            try {
+                DocumentModel docModel = readModel(doc);
+                if (ToutaticeDocumentHelper.isInWorkspaceLike(docModel.getCoreSession(), docModel)) {
+                    Property blob = docModel.getProperty("file:content");
+                    if (blob.isDirty()) {
+                        versioned = true;
+                    }
+                }
+            } catch (Exception e) {
+                throw new DocumentException(e);
+            }
+        }
+
+        if (versioned) {
+            option = VersioningOption.MINOR;
         } else {
-            // Default
-            checkin = super.isPostSaveDoingCheckIn(doc, option, options);
+            // Standard rule
+            option = super.validateOption(doc, option);
         }
 
-        return checkin;
+        return option;
     }
 
     /**
-     * Creates a version only if document is a File
-     * and has its principal binary modified.
+     * Gets the document model for the given core document.
+     *
+     * @param doc the document
+     * @return the document model
      */
-    @Override
-    public Document doPostSave(Document doc, VersioningOption option, String checkinComment, Map<String, Serializable> options) throws DocumentException {
-        // Minor version
-        // FIXME: to parameterize
-        option = VersioningOption.MINOR;
+    protected DocumentModel readModel(Document doc) throws ClientException {
         try {
-            // FIXME: parameterize checkinComment?
-            return super.doPostSave(doc, option, checkinComment, options);
-        } finally {
-            resetBobStatus(doc);
+            String[] fileSchema = {"file"};
+            return DocumentModelFactory.createDocumentModel(doc, fileSchema);
+        } catch (DocumentException e) {
+            throw new ClientException("Failed to create document model", e);
         }
-    }
-
-    /**
-     * Reset map storing binary status of a document.
-     */
-    // Call two time on saveDocument:
-    // via isPostSaveDoingCheckIn and doPostSave
-    private synchronized void resetBobStatus(Document doc) {
-        blobStatus.clear();
-        // Robustness
-        Validate.isTrue(blobStatus.size() == 0);
     }
 
 }

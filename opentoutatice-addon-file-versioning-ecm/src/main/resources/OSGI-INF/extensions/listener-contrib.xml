@@ -5,17 +5,19 @@
     <extension target="org.nuxeo.ecm.core.event.EventServiceComponent"
         point="listener">
         
+        <!-- After ToutaticeDocumentCopiedListener (priority=140) -->
         <listener name="fileVersioningListener" async="false" postCommit="false"
             class="fr.toutatice.ecm.file.versioning.listener.FileVersioningListener"
-            priority="130">
-            <event>beforeDocumentModification</event>
+            priority="150">
+            <event>documentDuplicated</event>
         </listener>
         
-         <listener name="postCommitfileVersioningListener" async="false" postCommit="true"
+        <listener name="postCommitFileVersioningListener" async="false" postCommit="true"
             class="fr.toutatice.ecm.file.versioning.listener.PostCommitFileVersioningListener"
             priority="130">
             <event>documentCreated</event>
         </listener>
+        
 
     </extension>
 

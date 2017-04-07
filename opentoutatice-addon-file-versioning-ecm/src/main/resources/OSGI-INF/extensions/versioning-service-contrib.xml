@@ -7,18 +7,18 @@
 
     <extension target="org.nuxeo.ecm.core.versioning.VersioningService"
         point="versioningService">
-        <!-- Update -->
+        
         <service class="fr.toutatice.ecm.file.versioning.FileVersioningService" /> 
         
     </extension>
     
-    <!-- DnD / import -->
+    <!-- DnD / import: no version -->
     <extension target="org.nuxeo.ecm.platform.filemanager.service.FileManagerService"
         point="versioning">
         <versioning>
-            <defaultVersioningOption>MINOR</defaultVersioningOption>
-            <versionAfterAdd>true</versionAfterAdd>
+            <defaultVersioningOption>NONE</defaultVersioningOption>
+            <versionAfterAdd>false</versionAfterAdd>
         </versioning>     
-   </extension> 
+   </extension>
 
 </component>

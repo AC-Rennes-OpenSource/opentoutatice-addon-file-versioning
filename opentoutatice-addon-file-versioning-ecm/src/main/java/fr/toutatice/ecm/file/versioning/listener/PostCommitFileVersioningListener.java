@@ -12,8 +12,9 @@ import org.nuxeo.ecm.core.event.Event;
 import org.nuxeo.ecm.core.event.EventBundle;
 import org.nuxeo.ecm.core.event.PostCommitFilteringEventListener;
 import org.nuxeo.ecm.core.event.impl.DocumentEventContext;
-import org.nuxeo.ecm.platform.filemanager.api.FileManager;
-import org.nuxeo.runtime.api.Framework;
+
+import fr.toutatice.ecm.platform.core.helper.ToutaticeDocumentHelper;
+import fr.toutatice.ecm.platform.core.listener.ToutaticeDocumentEventListenerHelper;
 
 
 /**
@@ -21,19 +22,6 @@ import org.nuxeo.runtime.api.Framework;
  *
  */
 public class PostCommitFileVersioningListener implements PostCommitFilteringEventListener {
-
-    /** File Manager. */
-    private static FileManager fileManager;
-
-    /**
-     * Getter for FileManager.
-     */
-    public static FileManager getFileManager() {
-        if (fileManager == null) {
-            fileManager = (FileManager) Framework.getService(FileManager.class);
-        }
-        return fileManager;
-    }
 
     /**
      * Check documentCreated event and not aboutToCreate event to have dc:creator filled
@@ -56,13 +44,13 @@ public class PostCommitFileVersioningListener implements PostCommitFilteringEven
             DocumentEventContext docCtx = (DocumentEventContext) event.getContext();
             DocumentModel srcDoc = docCtx.getSourceDocument();
 
-            // Versionable File
-            boolean isVersionableFile = StringUtils.equals("File", srcDoc.getType()) && srcDoc.isVersionable() && !srcDoc.isImmutable();
-            if (isVersionableFile) {
-                // documentcreated can be sent by version creation (AbstractSession#notifyCheckedInVersion)
-                // or import: we do not versioning in those cases
-                if (!srcDoc.isVersion() && srcDoc.isCheckedOut()) {
-                    if (getFileManager().doVersioningAfterAdd()) {
+            if (StringUtils.equals("File", srcDoc.getType()) && ToutaticeDocumentHelper.isInWorkspaceLike(docCtx.getCoreSession(), srcDoc)) {
+                // Alterable document
+                if (ToutaticeDocumentEventListenerHelper.isAlterableDocument(srcDoc)) {
+                    // Versionable File
+                    boolean isVersionableFile = StringUtils.equals("File", srcDoc.getType()) && srcDoc.isVersionable();
+                    if (isVersionableFile && srcDoc.isCheckedOut()) {
+                        // Checkin
                         srcDoc.checkIn(VersioningOption.MINOR, null);
                     }
                 }
