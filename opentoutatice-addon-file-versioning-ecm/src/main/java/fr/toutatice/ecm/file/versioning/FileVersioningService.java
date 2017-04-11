@@ -3,20 +3,17 @@
  */
 package fr.toutatice.ecm.file.versioning;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.io.Serializable;
+import java.util.Map;
+
+import org.apache.commons.lang.BooleanUtils;
 import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.core.api.DocumentException;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelFactory;
 import org.nuxeo.ecm.core.api.VersioningOption;
-import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.ecm.core.model.Document;
-import org.nuxeo.ecm.core.schema.DocumentType;
 import org.nuxeo.ecm.core.versioning.StandardVersioningService;
-
-import fr.toutatice.ecm.platform.core.helper.ToutaticeDocumentHelper;
 
 
 /**
@@ -25,69 +22,33 @@ import fr.toutatice.ecm.platform.core.helper.ToutaticeDocumentHelper;
  */
 public class FileVersioningService extends StandardVersioningService {
 
-    /** Log. */
-    private static final Log log = LogFactory.getLog(FileVersioningService.class);
+    /** Marker to create Version. */
+    public static final String APPLY_OTTC_FILE_VERSIONING = "applyOttcFileVersioning";
 
-    /**
-     * Create.
-     */
-    // @Override
-    // public void doPostCreate(Document doc, Map<String, Serializable> options) {
-    // DocumentType type = doc.getType();
-    // if (type != null && StringUtils.equals("File", type.getName())) {
-    // try {
-    // DocumentModel docModel = readModel(doc);
-    // Blob blob = docModel.getAdapter(BlobHolder.class).getBlob();
-    // if (blob != null && blob.getLength() > 0) {
-    // setInitialVersion(doc);
-    // Document version = doc.checkIn(null, null);
-    //
-    // DocumentModel versionModel = readModel(version);
-    // String title = (String) docModel.getPropertyValue("dc:title");
-    // versionModel.setPropertyValue("dc:title", title);
-    //
-    // Event evt =
-    // // DublinCore ?
-    // versionModel.getCoreSession().save();
-    // }
-    // } catch (Exception e) {
-    // log.error(e);
-    // }
-    // } else {
-    // super.doPostCreate(doc, options);
-    // }
-    // }
-
-    /**
-     * Update.
-     */
     @Override
-    protected VersioningOption validateOption(Document doc, VersioningOption option) throws DocumentException {
-        DocumentType type = doc.getType();
-
-        boolean versioned = false;
-        if (type != null && StringUtils.equals("File", type.getName())) {
+    public Document doPostSave(Document doc, VersioningOption option, String checkinComment, Map<String, Serializable> options) throws DocumentException {
+        if (doApplyFileVersioning(doc, options)) {
             try {
-                DocumentModel docModel = readModel(doc);
-                if (ToutaticeDocumentHelper.isInWorkspaceLike(docModel.getCoreSession(), docModel)) {
-                    Property blob = docModel.getProperty("file:content");
-                    if (blob.isDirty()) {
-                        versioned = true;
-                    }
-                }
-            } catch (Exception e) {
-                throw new DocumentException(e);
+                // Versioning
+                incrementByOption(doc, VersioningOption.MINOR);
+                return doc.checkIn(null, checkinComment);
+            } finally {
+                options.remove(APPLY_OTTC_FILE_VERSIONING);
             }
-        }
-
-        if (versioned) {
-            option = VersioningOption.MINOR;
         } else {
-            // Standard rule
-            option = super.validateOption(doc, option);
+            return super.doPostSave(doc, option, checkinComment, options);
         }
+    }
 
-        return option;
+    /**
+     * A version is created for File when only its Blob has changed.
+     * 
+     * @param doc
+     * @return true if version must be created
+     * @throws DocumentException
+     */
+    protected boolean doApplyFileVersioning(Document doc, Map<String, Serializable> options) throws DocumentException {
+        return doc.isCheckedOut() && BooleanUtils.isTrue((Boolean) options.get(APPLY_OTTC_FILE_VERSIONING));
     }
 
     /**

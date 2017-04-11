@@ -4,12 +4,10 @@
 
     <require>org.nuxeo.ecm.core.versioning.VersioningService</require>
     <require>org.nuxeo.ecm.platform.filemanager.service.FileManagerService</require>
-
+    
     <extension target="org.nuxeo.ecm.core.versioning.VersioningService"
         point="versioningService">
-        
         <service class="fr.toutatice.ecm.file.versioning.FileVersioningService" /> 
-        
     </extension>
     
     <!-- DnD / import: no version -->
