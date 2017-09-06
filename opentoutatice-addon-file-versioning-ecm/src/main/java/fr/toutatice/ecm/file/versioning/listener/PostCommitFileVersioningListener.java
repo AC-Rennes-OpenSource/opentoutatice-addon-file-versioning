@@ -12,6 +12,8 @@ import org.nuxeo.ecm.core.event.EventBundle;
 import org.nuxeo.ecm.core.event.PostCommitFilteringEventListener;
 import org.nuxeo.ecm.core.event.impl.DocumentEventContext;
 
+import fr.toutatice.ecm.platform.core.listener.ToutaticeDocumentEventListenerHelper;
+
 
 /**
  * @author david
@@ -35,8 +37,8 @@ public class PostCommitFileVersioningListener extends AbstractFileVersioning imp
     @Override
     public void handleEvent(EventBundle events) throws ClientException {
         for (Event event : events) {
-            if (super.doVersioning(event)) {
-                DocumentModel srcDoc = ((DocumentEventContext) event.getContext()).getSourceDocument();
+            DocumentModel srcDoc = ((DocumentEventContext) event.getContext()).getSourceDocument();
+            if (ToutaticeDocumentEventListenerHelper.isAlterableDocument(srcDoc) && super.doVersioning(event)) {
                 if (srcDoc.isCheckedOut()) {
                     // Checkin
                     srcDoc.checkIn(VersioningOption.MINOR, null);
