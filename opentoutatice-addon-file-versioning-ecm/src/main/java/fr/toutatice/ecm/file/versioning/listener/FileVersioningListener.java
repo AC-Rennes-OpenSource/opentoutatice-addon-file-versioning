@@ -3,7 +3,7 @@
  */
 package fr.toutatice.ecm.file.versioning.listener;
 
-import org.nuxeo.ecm.core.api.ClientException;
+import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.event.DocumentEventTypes;
 import org.nuxeo.ecm.core.event.Event;
 import org.nuxeo.ecm.core.event.EventListener;
@@ -22,7 +22,7 @@ public class FileVersioningListener extends AbstractFileVersioning implements Ev
      * {@inheritDoc}
      */
     @Override
-    public void handleEvent(Event event) throws ClientException {
+    public void handleEvent(Event event) throws NuxeoException {
 
         if (DocumentEventTypes.BEFORE_DOC_UPDATE.equals(event.getName()) && super.doVersioning(event)) {
             DocumentEventContext docCtx = (DocumentEventContext) event.getContext();

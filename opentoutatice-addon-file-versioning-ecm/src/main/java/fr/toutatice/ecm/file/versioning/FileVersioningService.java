@@ -10,9 +10,11 @@ import java.util.Map;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.nuxeo.ecm.core.api.ClientException;
+import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentException;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelFactory;
+import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.VersioningOption;
 import org.nuxeo.ecm.core.model.Document;
 import org.nuxeo.ecm.core.versioning.StandardVersioningService;
@@ -34,7 +36,8 @@ public class FileVersioningService extends StandardVersioningService {
     public static final int MAX_VERSIONS = Integer.valueOf(Framework.getProperty("ottc.file.versioning.max.kept", "-1"));
 
     @Override
-    public Document doPostSave(Document doc, VersioningOption option, String checkinComment, Map<String, Serializable> options) throws DocumentException {
+    public Document doPostSave(CoreSession session, Document doc, VersioningOption option, String checkinComment, Map<String, Serializable> options)
+            throws NuxeoException {
         if (doApplyFileVersioning(doc, options)) {
             try {
                 // Versioning
@@ -62,7 +65,7 @@ public class FileVersioningService extends StandardVersioningService {
                 options.remove(APPLY_OTTC_FILE_VERSIONING);
             }
         } else {
-            return super.doPostSave(doc, option, checkinComment, options);
+            return super.doPostSave(session, doc, option, checkinComment, options);
         }
     }
 
@@ -73,23 +76,8 @@ public class FileVersioningService extends StandardVersioningService {
      * @return true if version must be created
      * @throws DocumentException
      */
-    protected boolean doApplyFileVersioning(Document doc, Map<String, Serializable> options) throws DocumentException {
+    protected boolean doApplyFileVersioning(Document doc, Map<String, Serializable> options) throws NuxeoException {
         return doc.isCheckedOut() && BooleanUtils.isTrue((Boolean) options.get(APPLY_OTTC_FILE_VERSIONING));
-    }
-
-    /**
-     * Gets the document model for the given core document.
-     *
-     * @param doc the document
-     * @return the document model
-     */
-    protected DocumentModel readModel(Document doc) throws ClientException {
-        try {
-            String[] fileSchema = {"file"};
-            return DocumentModelFactory.createDocumentModel(doc, fileSchema);
-        } catch (DocumentException e) {
-            throw new ClientException("Failed to create document model", e);
-        }
     }
 
 }

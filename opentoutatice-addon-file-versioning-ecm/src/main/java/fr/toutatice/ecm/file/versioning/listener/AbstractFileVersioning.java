@@ -35,7 +35,7 @@ public abstract class AbstractFileVersioning {
             DocumentModel srcDoc = docCtx.getSourceDocument();
 
             // File in Worksapce like
-            if (StringUtils.equals("File", srcDoc.getType()) && ToutaticeDocumentHelper.isInWorkspaceLike(docCtx.getCoreSession(), srcDoc)) {
+            if (StringUtils.equals("File", srcDoc.getType()) && ToutaticeDocumentHelper.getInstance().isInWorkspaceLike(docCtx.getCoreSession(), srcDoc)) {
                 // Alterable document
                 if (ToutaticeDocumentEventListenerHelper.isAlterableDocument(srcDoc) && srcDoc.isVersionable()) {
                     if (!DocumentEventTypes.BEFORE_DOC_UPDATE.equals(event.getName())) {
